@@ -287,7 +287,7 @@ namespace Blackhole
 
         IEnumerator ShowResultLater(int score, bool isNew)
         {
-            yield return new WaitForSecondsRealtime((float)Tuning.GameOverDelay);
+            yield return new WaitForSeconds((float)Tuning.GameOverDelay);
             resultRoutine = null;
             ui.ShowResult(score, isNew, Session.TopTier, Session.Score.Best, !Session.ReviveUsed);
         }

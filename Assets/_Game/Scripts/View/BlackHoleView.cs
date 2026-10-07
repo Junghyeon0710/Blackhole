@@ -25,7 +25,7 @@ namespace Blackhole
             float r = (float)bh.R * Tuning.WorldToUnity;
             visual.transform.localScale = new Vector3(r, r, 1);
             // 캔버스 rotate(t * 2.2) 는 화면 시계 방향
-            disk.transform.localRotation = Quaternion.Euler(0, 0, -Time.unscaledTime * 2.2f * Mathf.Rad2Deg);
+            disk.transform.localRotation = Quaternion.Euler(0, 0, -Time.time * 2.2f * Mathf.Rad2Deg);
             var c = new Color(1, 1, 1, Mathf.Max(0, (float)bh.Fade));
             glow.color = c;
             disk.color = c;

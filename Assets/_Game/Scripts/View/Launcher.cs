@@ -136,7 +136,7 @@ namespace Blackhole
             else if (left != right)
             {
                 // 키를 누르고 있으면 운영체제 키 반복처럼 계속 돈다
-                repeatTimer -= Time.unscaledDeltaTime;
+                repeatTimer -= Time.deltaTime;
                 while (repeatTimer <= 0)
                 {
                     session.AimAngle += left ? KeyStep : -KeyStep;
@@ -208,7 +208,7 @@ namespace Blackhole
                 }
 
                 float pop = session.Ready ? 1 : Mathf.Max(0.4f, 1 - (float)(session.Cooldown / Tuning.LaunchCooldown));
-                float bob = ViewMetrics.CssToUnity(Mathf.Sin(Time.unscaledTime * 4) * 1.2f);
+                float bob = ViewMetrics.CssToUnity(Mathf.Sin(Time.time * 4) * 1.2f);
                 waiting.SetTier(tier);
                 waiting.SetAlpha(session.Ready ? 1 : 0.45f);
                 waiting.Place(new Vector3(start.x, start.y - bob, 0), rUnity * pop);

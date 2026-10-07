@@ -19,7 +19,7 @@ namespace Blackhole
 
         void OnEnable()
         {
-            startedAt = Time.unscaledTime;
+            startedAt = Time.time;
             Apply();
         }
 
@@ -28,7 +28,7 @@ namespace Blackhole
         void Apply()
         {
             if (group == null) group = GetComponent<CanvasGroup>();
-            float p = Mathf.Clamp01((Time.unscaledTime - startedAt - delay) / duration);
+            float p = Mathf.Clamp01((Time.time - startedAt - delay) / duration);
             float e = CubicBezier.Pop.Evaluate(p);
             transform.localScale = Vector3.one * Mathf.LerpUnclamped(0.85f, 1f, e);
             group.alpha = Mathf.Clamp01(e);

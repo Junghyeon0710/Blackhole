@@ -132,7 +132,7 @@ namespace Blackhole
 
         void DrawStars(Rect stage)
         {
-            float time = Time.unscaledTime;
+            float time = Time.time;
             stars.Clear();
             float px = ViewMetrics.UiScale / ViewMetrics.PxPerUnity; // CSS px → 유닛
             foreach (var s in staticStars)

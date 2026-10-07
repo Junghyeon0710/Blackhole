@@ -39,7 +39,7 @@ namespace Blackhole
             box.sizeDelta = new Vector2(Mathf.Ceil(size.x) + 32, Mathf.Ceil(label.fontSize * 1.25f) + 16);
             float radius = box.sizeDelta.y / 2;
             fill.pixelsPerUnitMultiplier = shadow.pixelsPerUnitMultiplier = 18f / radius;
-            hideAt = Time.unscaledTime + (big ? 2.2f : 1.5f);
+            hideAt = Time.time + (big ? 2.2f : 1.5f);
             SetVisible(true);
         }
 
@@ -48,13 +48,13 @@ namespace Blackhole
             if (visible == on) return;
             visible = on;
             fromAlpha = alpha; fromOffset = offset; fromScale = scale;
-            changedAt = Time.unscaledTime;
+            changedAt = Time.time;
         }
 
         void Update()
         {
-            if (visible && Time.unscaledTime >= hideAt) SetVisible(false);
-            float e = Time.unscaledTime - changedAt;
+            if (visible && Time.time >= hideAt) SetVisible(false);
+            float e = Time.time - changedAt;
             float a = CubicBezier.Ease.Evaluate(e / 0.2f), t = CubicBezier.Toast.Evaluate(e / 0.25f);
             alpha = Mathf.Lerp(fromAlpha, visible ? 1 : 0, a);
             offset = Mathf.LerpUnclamped(fromOffset, visible ? 0 : -8, t);

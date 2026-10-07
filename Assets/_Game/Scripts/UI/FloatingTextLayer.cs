@@ -110,7 +110,7 @@ namespace Blackhole
             if (dangerLabel.gameObject.activeSelf != show) dangerLabel.gameObject.SetActive(show);
             if (!show) return;
 
-            float time = Time.unscaledTime;
+            float time = Time.time;
             dangerLabel.text = $"위험! {session.Danger.Remaining:0.0}";
             var c = DangerColor;
             c.a = 0.6f + 0.4f * Mathf.Sin(time * 10);

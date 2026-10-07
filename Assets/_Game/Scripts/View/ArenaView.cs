@@ -20,7 +20,7 @@ namespace Blackhole
 
         void LateUpdate()
         {
-            float time = Time.unscaledTime;
+            float time = Time.time;
             float arena = (float)Tuning.ArenaRadius * Tuning.WorldToUnity;
             fill.transform.localScale = Vector3.one * arena;
 

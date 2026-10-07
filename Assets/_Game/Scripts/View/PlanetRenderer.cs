@@ -57,7 +57,7 @@ namespace Blackhole
         void LateUpdate()
         {
             if (session == null) return;
-            float time = Time.unscaledTime;
+            float time = Time.time;
             var bodies = session.World.Bodies;
             dangerRings.Clear();
             for (int i = 0; i < bodies.Count; i++)
