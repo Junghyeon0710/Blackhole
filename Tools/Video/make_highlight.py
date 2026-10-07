@@ -3,8 +3,8 @@
 
 1) Unity 에서 FrameRecorder 로 녹화한 장면(Recordings/<clip>/00000.jpg …, events.json)을
 2) edit.json 의 대본(구간, 속도, 자막)대로 이어 붙일 프레임 목록과 효과음 트랙(WAV)으로 바꾸고
-3) Blender(백그라운드)로 컷·크로스페이드·자막·엔딩 카드를 붙여 MP4 를 만든 뒤
-4) README 에 바로 재생되는 GIF 를 Pillow 로 만든다.
+3) Blender(백그라운드)로 컷·크로스페이드·자막·엔딩 카드를 붙여 MP4(docs/media/highlight.mp4)를 만들고
+4) GitHub README 에 올릴 720p 판(10MB 이하)과 공유용 GIF 를 Recordings/highlight 에 만든다.
 
 대본의 시점은 초 단위 숫자, "end", 또는 이벤트 기준 "click+0.8", "combo-1.8", "launch", "blackhole+3.4", "over-4.0" 처럼 쓴다.
 (combo = 그 장면에서 콤보가 가장 높았던 합체)
@@ -142,7 +142,13 @@ def main():
     subprocess.run([BLENDER, "--background", "--factory-startup", "--python",
                     os.path.join(HERE, "blender_edit.py"), "--", plan_path], check=True)
 
-    make_gif(frames_dir, os.path.join(OUT_DIR, "highlight.gif"), fps=fps, step=max(1, fps // 15))
+    # GitHub 는 README 에 끌어다 놓는 영상을 10MB 까지 받는다 (무료 계정)
+    upload = os.path.join(WORK, "blackhole-highlight.mp4")
+    subprocess.run([BLENDER, "--background", "--factory-startup", "--python",
+                    os.path.join(HERE, "blender_reencode.py"), "--", plan["mp4"], upload, "20"], check=True)
+    print(f"GitHub 업로드용 → {upload} ({os.path.getsize(upload) / 1e6:.1f} MB)")
+
+    make_gif(frames_dir, os.path.join(WORK, "highlight.gif"), fps=fps, step=max(1, fps // 15))
 
 
 def make_gif(frame_dir, path, fps=60, width=360, step=4):
