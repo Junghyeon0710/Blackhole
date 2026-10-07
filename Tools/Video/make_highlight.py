@@ -145,14 +145,14 @@ def main():
     make_gif(frames_dir, os.path.join(OUT_DIR, "highlight.gif"), fps=fps, step=max(1, fps // 30))
 
 
-def make_gif(frame_dir, path, fps=60, width=480, step=2, chunk_seconds=2.0):
+def make_gif(frame_dir, path, fps=60, width=480, step=2, chunk_seconds=2.0, first=0, last=None):
     """
-    README 용 GIF (가로 480px, 30fps).
+    README 용 GIF (가로 480px, 30fps). first~last 프레임만 쓸 수도 있다.
     - 팔레트는 MEDIANCUT 으로 2초 구간마다 새로 뽑는다. MAXCOVERAGE 는 우주 배경 그라디언트를 얼룩지게 뭉갠다.
     - 한 구간 안의 프레임은 팔레트를 같이 써서, 앞 프레임과 같은 부분은 다시 저장하지 않는다 (용량 절약).
     - 디더링은 쓰지 않는다. 프레임마다 점무늬가 바뀌어 용량이 4배가 되고 화면이 지글거린다.
     """
-    files = sorted(f for f in os.listdir(frame_dir) if f.endswith(".jpg"))[::step]
+    files = sorted(f for f in os.listdir(frame_dir) if f.endswith(".jpg"))[first:last][::step]
     frames = []
     for name in files:
         im = Image.open(os.path.join(frame_dir, name)).convert("RGB")
