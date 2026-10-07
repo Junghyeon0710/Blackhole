@@ -1,0 +1,70 @@
+{
+  "fps": 30,
+  "width": 720,
+  "height": 1280,
+  "font": "Assets/_Game/Fonts/Jua-Regular.ttf",
+  "crossfade": 8,
+  "segments": [
+    {
+      "clip": "clip1_intro",
+      "from": 0,
+      "to": 70,
+      "speed": 1,
+      "caption": ""
+    },
+    {
+      "clip": "clip1_intro",
+      "from": 70,
+      "to": 230,
+      "speed": 1,
+      "caption": "같은 행성끼리 부딪히면 합체!"
+    },
+    {
+      "clip": "clip1_intro",
+      "from": 395,
+      "to": 470,
+      "speed": 1,
+      "caption": "연달아 터지면 콤보!"
+    },
+    {
+      "clip": "clip2_blackhole",
+      "from": 20,
+      "to": 44,
+      "speed": 1,
+      "caption": "금성 한 발이면..."
+    },
+    {
+      "clip": "clip2_blackhole",
+      "from": 44,
+      "to": 100,
+      "speed": 0.5,
+      "caption": "태양 + 태양 = 블랙홀!"
+    },
+    {
+      "clip": "clip2_blackhole",
+      "from": 100,
+      "to": 200,
+      "speed": 1,
+      "caption": ""
+    },
+    {
+      "clip": "clip3_gameover",
+      "from": "over-120",
+      "to": "over+15",
+      "speed": 1,
+      "caption": "점선 밖으로 넘치면 끝!"
+    },
+    {
+      "clip": "clip3_gameover",
+      "from": "over+15",
+      "to": "end",
+      "speed": 1,
+      "caption": ""
+    }
+  ],
+  "end_card": {
+    "seconds": 2.2,
+    "title": "블랙홀 만들기",
+    "subtitle": "Unity  |  Android / iOS"
+  }
+}
