@@ -16,8 +16,6 @@ with open(plan_path, encoding="utf-8") as f:
 BUTTER = (1.0, 0.847, 0.369, 1.0)
 INK = (1.0, 0.969, 0.925, 1.0)
 INK_SOFT = (0.788, 0.753, 0.949, 1.0)
-DARK = (0.10, 0.08, 0.27, 1.0)
-SPACE = (0.102, 0.078, 0.275, 1.0)
 
 scene = bpy.context.scene
 scene.render.resolution_x = plan["width"]
@@ -30,6 +28,7 @@ scene.view_settings.view_transform = "Standard"  # 녹화한 색 그대로
 se = scene.sequence_editor_create()
 font = bpy.data.fonts.load(plan["font"])
 fade = plan["crossfade"]
+S = plan["width"] / 720  # 크기는 720px 기준으로 적고 해상도에 맞춰 키운다
 
 
 def fade_alpha(strip, start, end, length=6, peak=1.0):
@@ -82,13 +81,13 @@ for i, seg in enumerate(plan["segments"]):
     if seg["caption"]:
         cap_start = seg["start"] + (fade if i > 0 else 0)
         cap_end = seg["start"] + len(files) - (fade if i < len(plan["segments"]) - 1 else 0)
-        cap = text(f"cap{i}", seg["caption"], 6, cap_start, cap_end - cap_start, 50, BUTTER, 0.055, box=True)
-        fade_alpha(cap, cap_start, cap_end)
+        cap = text(f"cap{i}", seg["caption"], 6, cap_start, cap_end - cap_start, 50 * S, BUTTER, 0.055, box=True)
+        fade_alpha(cap, cap_start, cap_end, length=round(6 * plan["fps"] / 30))
 
 # 2) 엔딩 카드: 배경색 + 시작 화면과 같은 로고(화성, 웃는 태양, 지구) + 제목
 end_start, end_len = plan["end_start"], plan["end_frames"]
-bg = se.strips.new_effect("end_bg", "COLOR", 7, end_start, length=end_len)
-bg.color = SPACE[:3]
+bg = se.strips.new_image("end_bg", plan["end_bg"], 7, end_start)
+bg.duration = end_len
 bg.blend_type = "ALPHA_OVER"
 bg.blend_alpha = 0.0
 bg.keyframe_insert("blend_alpha", frame=end_start)
@@ -105,21 +104,21 @@ ch = 8
 for k, (body, face, ox, oy, radius) in enumerate(logo):
     for path, unit in ((body, None), (face, 128)):
         img = se.strips.new_image(f"logo{k}_{ch}", os.path.join(art, path), ch, end_start + 4)
-        img.frame_final_duration = end_len - 4
+        img.duration = end_len - 4
         img.blend_type = "ALPHA_OVER"
         w = img.elements[0].orig_width
         # 행성 그림은 반지름 = PPU(px) 규칙: 크기 비율 = 원하는 반지름 / 그림 반지름
         src_radius = unit if unit else {"planet_03.png": 78, "planet_10.png": 276, "planet_05.png": 117}[os.path.basename(path)]
         s = radius / src_radius
-        img.transform.scale_x = img.transform.scale_y = s
-        img.transform.offset_x = ox
-        img.transform.offset_y = oy
+        img.transform.scale_x = img.transform.scale_y = s * S
+        img.transform.offset_x = ox * S
+        img.transform.offset_y = oy * S
         fade_alpha(img, end_start + 4, end_start + end_len, length=8)
         ch += 1
 
-title = text("end_title", plan["end_card"]["title"], ch, end_start + 6, end_len - 6, 104, BUTTER, 0.47, shadow=True)
+title = text("end_title", plan["end_card"]["title"], ch, end_start + 6, end_len - 6, 104 * S, BUTTER, 0.47, shadow=True)
 fade_alpha(title, end_start + 6, end_start + end_len, length=8)
-sub = text("end_sub", plan["end_card"]["subtitle"], ch + 1, end_start + 10, end_len - 10, 40, INK_SOFT, 0.38)
+sub = text("end_sub", plan["end_card"]["subtitle"], ch + 1, end_start + 10, end_len - 10, 40 * S, INK_SOFT, 0.38)
 fade_alpha(sub, end_start + 10, end_start + end_len, length=8)
 
 # 3) 효과음
@@ -131,10 +130,11 @@ r.image_settings.media_type = "VIDEO"
 r.image_settings.file_format = "FFMPEG"
 r.ffmpeg.format = "MPEG4"
 r.ffmpeg.codec = "H264"
-r.ffmpeg.constant_rate_factor = "HIGH"
-r.ffmpeg.ffmpeg_preset = "GOOD"
+r.ffmpeg.constant_rate_factor = "CUSTOM"
+r.ffmpeg.custom_constant_rate_factor = 17  # 거의 무손실
+r.ffmpeg.ffmpeg_preset = "BEST"
 r.ffmpeg.audio_codec = "AAC"
-r.ffmpeg.audio_bitrate = 160
+r.ffmpeg.audio_bitrate = 192
 r.ffmpeg.audio_channels = "MONO"
 r.filepath = plan["mp4"]
 bpy.ops.render.render(animation=True)
