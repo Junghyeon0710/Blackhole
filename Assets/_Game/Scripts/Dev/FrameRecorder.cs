@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections;
 using System.Globalization;
 using System.IO;
@@ -20,6 +21,8 @@ namespace Blackhole.Dev
         public string Folder { get; private set; }
         public int Frame { get; private set; }
         public bool Recording { get; private set; }
+        /// <summary>프레임을 하나 남길 때마다 부른다 (방금 남긴 프레임 번호). 장면 연출을 프레임 단위로 맞출 때 쓴다.</summary>
+        public Action<int> FrameHook;
 
         readonly StringBuilder events = new StringBuilder();
         GameManager game;
@@ -112,7 +115,8 @@ namespace Blackhole.Dev
                 var tex = ScreenCapture.CaptureScreenshotAsTexture();
                 File.WriteAllBytes(Path.Combine(Folder, Frame.ToString("00000") + ".jpg"), tex.EncodeToJPG(Quality));
                 Destroy(tex);
-                Frame++;
+                int written = Frame++;
+                FrameHook?.Invoke(written);
             }
         }
     }
