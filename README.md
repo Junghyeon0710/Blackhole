@@ -4,14 +4,14 @@
 
 
 <p align="center">
-  <img src="docs/media/highlight.gif" width="270" alt="하이라이트 영상">
+  <img src="docs/media/highlight.gif" width="320" alt="하이라이트 영상">
   <br>
-  <a href="docs/media/highlight.mp4">🔊 소리 있는 고화질 영상 (MP4, 26초)</a>
+  <a href="docs/media/highlight.mp4">🔊 소리 있는 고화질 영상 (MP4 1080×1920, 60fps)</a>
 </p>
 
 ## 플레이 화면
 
-| 시작 화면 | 연쇄 합체 · 콤보 | 금성 한 발로 시작된 연쇄 |
+| 시작 화면 | 합체 · 새 행성 발견 | 금성 한 발로 5연쇄 |
 | :---: | :---: | :---: |
 | <img src="docs/images/01_start.jpg" width="240"> | <img src="docs/images/02_combo.jpg" width="240"> | <img src="docs/images/03_chain.jpg" width="240"> |
 | **블랙홀 탄생** | **위험! 넘치기 직전** | **결과 창** |
