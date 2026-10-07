@@ -56,12 +56,7 @@
 
 이번 판엔 몇 번째 우주까지 갈 수 있을까요? 가장 멀리 간 우주는 기록으로 남아요.
 
-<table>
-  <tr>
-    <td align="center"><img src="docs/images/07_universe_open.jpg" width="240"><br><sub>블랙홀 자리에서 열리는 새 우주</sub></td>
-    <td align="center"><img src="docs/images/08_universe_arrived.jpg" width="240"><br><sub>두 번째 우주 도착!</sub></td>
-  </tr>
-</table>
+<p align="center"><img src="docs/media/universe.gif" width="320" alt="블랙홀 자리에서 두 번째 우주가 열리는 장면"></p>
 
 ## 행성마다 표정이 있어요
 
