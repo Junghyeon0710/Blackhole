@@ -4,7 +4,7 @@
 1) Unity 에서 FrameRecorder 로 녹화한 장면(Recordings/<clip>/00000.jpg …, events.json)을
 2) edit.json 의 대본(구간, 속도, 자막)대로 이어 붙일 프레임 목록과 효과음 트랙(WAV)으로 바꾸고
 3) Blender(백그라운드)로 컷·크로스페이드·자막·엔딩 카드를 붙여 MP4(docs/media/highlight.mp4)를 만들고
-4) GitHub README 에 올릴 720p 판(10MB 이하)과 공유용 GIF 를 Recordings/highlight 에 만든다.
+4) README 맨 위에 넣는 고화질 GIF(docs/media/highlight.gif)를 만든다.
 
 대본의 시점은 초 단위 숫자, "end", 또는 이벤트 기준 "click+0.8", "combo-1.8", "launch", "blackhole+3.4", "over-4.0" 처럼 쓴다.
 (combo = 그 장면에서 콤보가 가장 높았던 합체)
@@ -142,31 +142,44 @@ def main():
     subprocess.run([BLENDER, "--background", "--factory-startup", "--python",
                     os.path.join(HERE, "blender_edit.py"), "--", plan_path], check=True)
 
-    # GitHub 는 README 에 끌어다 놓는 영상을 10MB 까지 받는다 (무료 계정)
-    upload = os.path.join(WORK, "blackhole-highlight.mp4")
-    subprocess.run([BLENDER, "--background", "--factory-startup", "--python",
-                    os.path.join(HERE, "blender_reencode.py"), "--", plan["mp4"], upload, "20"], check=True)
-    print(f"GitHub 업로드용 → {upload} ({os.path.getsize(upload) / 1e6:.1f} MB)")
-
-    make_gif(frames_dir, os.path.join(WORK, "highlight.gif"), fps=fps, step=max(1, fps // 15))
+    make_gif(frames_dir, os.path.join(OUT_DIR, "highlight.gif"), fps=fps, step=max(1, fps // 30))
 
 
-def make_gif(frame_dir, path, fps=60, width=360, step=4):
-    """15fps GIF. 모든 프레임이 팔레트 하나(256색)를 같이 써야 프레임 사이 압축이 잘 되어 용량이 절반이 된다."""
+def make_gif(frame_dir, path, fps=60, width=480, step=2, chunk_seconds=2.0):
+    """
+    README 용 GIF (가로 480px, 30fps).
+    - 팔레트는 MEDIANCUT 으로 2초 구간마다 새로 뽑는다. MAXCOVERAGE 는 우주 배경 그라디언트를 얼룩지게 뭉갠다.
+    - 한 구간 안의 프레임은 팔레트를 같이 써서, 앞 프레임과 같은 부분은 다시 저장하지 않는다 (용량 절약).
+    - 디더링은 쓰지 않는다. 프레임마다 점무늬가 바뀌어 용량이 4배가 되고 화면이 지글거린다.
+    """
     files = sorted(f for f in os.listdir(frame_dir) if f.endswith(".jpg"))[::step]
     frames = []
     for name in files:
         im = Image.open(os.path.join(frame_dir, name)).convert("RGB")
         frames.append(im.resize((width, round(im.height * width / im.width)), Image.LANCZOS))
-    samples = frames[::3]
-    h = frames[0].height
-    strip = Image.new("RGB", (width, h * len(samples)))
-    for i, im in enumerate(samples):
-        strip.paste(im, (0, i * h))
-    palette = strip.quantize(colors=256, method=Image.Quantize.MAXCOVERAGE)
-    q = [im.quantize(palette=palette, dither=Image.Dither.NONE) for im in frames]
-    q[0].save(path, save_all=True, append_images=q[1:], duration=round(1000 * step / fps), loop=0, optimize=True)
-    print(f"GIF {len(q)}프레임 → {path} ({os.path.getsize(path) / 1e6:.1f} MB)")
+
+    out_fps = fps / step
+    chunk = max(1, round(chunk_seconds * out_fps))
+    quantized = []
+    for c in range(0, len(frames), chunk):
+        part = frames[c:c + chunk]
+        samples = part[::2]
+        h = part[0].height
+        strip = Image.new("RGB", (width, h * len(samples)))
+        for i, im in enumerate(samples):
+            strip.paste(im, (0, i * h))
+        palette = strip.quantize(colors=255, method=Image.Quantize.MEDIANCUT)
+        quantized += [im.quantize(palette=palette, dither=Image.Dither.NONE) for im in part]
+
+    # GIF 프레임 시간은 10ms 단위라 30fps 는 30·30·40ms 를 번갈아 써서 실제 속도를 맞춘다
+    frame_ms = 1000 / out_fps
+    durations, t = [], 0.0
+    for i in range(len(quantized)):
+        nxt = round((t + frame_ms) / 10) * 10
+        durations.append(max(10, nxt - round(t / 10) * 10))
+        t += frame_ms
+    quantized[0].save(path, save_all=True, append_images=quantized[1:], duration=durations, loop=0, optimize=True)
+    print(f"GIF {len(quantized)}프레임 {width}px {out_fps:.0f}fps → {path} ({os.path.getsize(path) / 1e6:.1f} MB)")
 
 
 if __name__ == "__main__":
