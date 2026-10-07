@@ -1,0 +1,423 @@
+{
+ "items": [
+  {
+   "path": "Planets/planet_00.png",
+   "w": 76,
+   "h": 76,
+   "ppu": 33,
+   "kind": "world",
+   "mip": true,
+   "tier": 0
+  },
+  {
+   "path": "Planets/planet_01.png",
+   "w": 102,
+   "h": 102,
+   "ppu": 45,
+   "kind": "world",
+   "mip": true,
+   "tier": 1
+  },
+  {
+   "path": "Planets/planet_02.png",
+   "w": 134,
+   "h": 134,
+   "ppu": 60,
+   "kind": "world",
+   "mip": true,
+   "tier": 2
+  },
+  {
+   "path": "Planets/planet_03.png",
+   "w": 173,
+   "h": 173,
+   "ppu": 78,
+   "kind": "world",
+   "mip": true,
+   "tier": 3
+  },
+  {
+   "path": "Planets/planet_04.png",
+   "w": 212,
+   "h": 212,
+   "ppu": 96,
+   "kind": "world",
+   "mip": true,
+   "tier": 4
+  },
+  {
+   "path": "Planets/planet_05.png",
+   "w": 257,
+   "h": 257,
+   "ppu": 117,
+   "kind": "world",
+   "mip": true,
+   "tier": 5
+  },
+  {
+   "path": "Planets/planet_06.png",
+   "w": 309,
+   "h": 309,
+   "ppu": 141,
+   "kind": "world",
+   "mip": true,
+   "tier": 6
+  },
+  {
+   "path": "Planets/planet_07.png",
+   "w": 367,
+   "h": 367,
+   "ppu": 168,
+   "kind": "world",
+   "mip": true,
+   "tier": 7
+  },
+  {
+   "path": "Planets/planet_08.png",
+   "w": 646,
+   "h": 646,
+   "ppu": 198,
+   "kind": "world",
+   "mip": true,
+   "tier": 8
+  },
+  {
+   "path": "Planets/planet_09.png",
+   "w": 510,
+   "h": 510,
+   "ppu": 234,
+   "kind": "world",
+   "mip": true,
+   "tier": 9
+  },
+  {
+   "path": "Planets/planet_10.png",
+   "w": 899,
+   "h": 899,
+   "ppu": 276,
+   "kind": "world",
+   "mip": true,
+   "tier": 10
+  },
+  {
+   "path": "Faces/face_normal.png",
+   "w": 256,
+   "h": 256,
+   "ppu": 128,
+   "kind": "world",
+   "mip": true
+  },
+  {
+   "path": "Faces/face_blink.png",
+   "w": 256,
+   "h": 256,
+   "ppu": 128,
+   "kind": "world",
+   "mip": true
+  },
+  {
+   "path": "Faces/face_happy.png",
+   "w": 256,
+   "h": 256,
+   "ppu": 128,
+   "kind": "world",
+   "mip": true
+  },
+  {
+   "path": "Faces/face_scared.png",
+   "w": 256,
+   "h": 256,
+   "ppu": 128,
+   "kind": "world",
+   "mip": true
+  },
+  {
+   "path": "BlackHole/bh_glow.png",
+   "w": 524,
+   "h": 524,
+   "ppu": 100,
+   "kind": "world",
+   "mip": true
+  },
+  {
+   "path": "BlackHole/bh_disk.png",
+   "w": 445,
+   "h": 445,
+   "ppu": 100,
+   "kind": "world",
+   "mip": true
+  },
+  {
+   "path": "BlackHole/bh_core.png",
+   "w": 216,
+   "h": 216,
+   "ppu": 100,
+   "kind": "world",
+   "mip": true
+  },
+  {
+   "path": "FX/arena_fill.png",
+   "w": 1028,
+   "h": 1028,
+   "ppu": 512,
+   "kind": "world",
+   "mip": false
+  },
+  {
+   "path": "FX/disc.png",
+   "w": 64,
+   "h": 64,
+   "ppu": 30,
+   "kind": "world",
+   "mip": true
+  },
+  {
+   "path": "FX/glow.png",
+   "w": 128,
+   "h": 128,
+   "ppu": 64,
+   "kind": "world",
+   "mip": true
+  },
+  {
+   "path": "UI/ui_round_r5.png",
+   "w": 48,
+   "h": 48,
+   "ppu": 400,
+   "kind": "ui",
+   "border": [
+    22,
+    22,
+    22,
+    22
+   ]
+  },
+  {
+   "path": "UI/ui_round_r12.png",
+   "w": 104,
+   "h": 104,
+   "ppu": 400,
+   "kind": "ui",
+   "border": [
+    50,
+    50,
+    50,
+    50
+   ]
+  },
+  {
+   "path": "UI/ui_round_r14.png",
+   "w": 120,
+   "h": 120,
+   "ppu": 400,
+   "kind": "ui",
+   "border": [
+    58,
+    58,
+    58,
+    58
+   ]
+  },
+  {
+   "path": "UI/ui_round_r16.png",
+   "w": 136,
+   "h": 136,
+   "ppu": 400,
+   "kind": "ui",
+   "border": [
+    66,
+    66,
+    66,
+    66
+   ]
+  },
+  {
+   "path": "UI/ui_round_r18.png",
+   "w": 152,
+   "h": 152,
+   "ppu": 400,
+   "kind": "ui",
+   "border": [
+    74,
+    74,
+    74,
+    74
+   ]
+  },
+  {
+   "path": "UI/ui_round_r22.png",
+   "w": 184,
+   "h": 184,
+   "ppu": 400,
+   "kind": "ui",
+   "border": [
+    90,
+    90,
+    90,
+    90
+   ]
+  },
+  {
+   "path": "UI/ui_round_r28.png",
+   "w": 232,
+   "h": 232,
+   "ppu": 400,
+   "kind": "ui",
+   "border": [
+    114,
+    114,
+    114,
+    114
+   ]
+  },
+  {
+   "path": "UI/ui_outline_r28.png",
+   "w": 232,
+   "h": 232,
+   "ppu": 400,
+   "kind": "ui",
+   "border": [
+    114,
+    114,
+    114,
+    114
+   ]
+  },
+  {
+   "path": "UI/ui_outline_r14.png",
+   "w": 120,
+   "h": 120,
+   "ppu": 400,
+   "kind": "ui",
+   "border": [
+    58,
+    58,
+    58,
+    58
+   ]
+  },
+  {
+   "path": "UI/ui_outline_r16.png",
+   "w": 136,
+   "h": 136,
+   "ppu": 400,
+   "kind": "ui",
+   "border": [
+    66,
+    66,
+    66,
+    66
+   ]
+  },
+  {
+   "path": "UI/ui_pod_ring.png",
+   "w": 232,
+   "h": 232,
+   "ppu": 400,
+   "kind": "ui"
+  },
+  {
+   "path": "UI/ui_banner_tile.png",
+   "w": 112,
+   "h": 112,
+   "ppu": 400,
+   "kind": "ui",
+   "wrap": "repeat"
+  },
+  {
+   "path": "UI/ui_dash_h.png",
+   "w": 40,
+   "h": 8,
+   "ppu": 400,
+   "kind": "ui",
+   "wrap": "repeat"
+  },
+  {
+   "path": "UI/ui_adbox.png",
+   "w": 640,
+   "h": 996,
+   "ppu": 200,
+   "kind": "ui"
+  },
+  {
+   "path": "UI/Icons/icon_swap.png",
+   "w": 96,
+   "h": 96,
+   "ppu": 400,
+   "kind": "ui",
+   "mip": true
+  },
+  {
+   "path": "UI/Icons/icon_clean.png",
+   "w": 96,
+   "h": 96,
+   "ppu": 400,
+   "kind": "ui",
+   "mip": true
+  },
+  {
+   "path": "UI/Icons/icon_sound_on.png",
+   "w": 96,
+   "h": 96,
+   "ppu": 400,
+   "kind": "ui",
+   "mip": true
+  },
+  {
+   "path": "UI/Icons/icon_sound_off.png",
+   "w": 96,
+   "h": 96,
+   "ppu": 400,
+   "kind": "ui",
+   "mip": true
+  },
+  {
+   "path": "UI/Icons/icon_vib_on.png",
+   "w": 96,
+   "h": 96,
+   "ppu": 400,
+   "kind": "ui",
+   "mip": true
+  },
+  {
+   "path": "UI/Icons/icon_vib_off.png",
+   "w": 96,
+   "h": 96,
+   "ppu": 400,
+   "kind": "ui",
+   "mip": true
+  },
+  {
+   "path": "UI/Icons/icon_tv.png",
+   "w": 96,
+   "h": 96,
+   "ppu": 400,
+   "kind": "ui",
+   "mip": true
+  },
+  {
+   "path": "UI/Icons/icon_trophy.png",
+   "w": 96,
+   "h": 96,
+   "ppu": 400,
+   "kind": "ui",
+   "mip": true
+  },
+  {
+   "path": "UI/Icons/icon_touch.png",
+   "w": 96,
+   "h": 96,
+   "ppu": 400,
+   "kind": "ui",
+   "mip": true
+  },
+  {
+   "path": "UI/Icons/icon_warning.png",
+   "w": 96,
+   "h": 96,
+   "ppu": 400,
+   "kind": "ui",
+   "mip": true
+  }
+ ]
+}

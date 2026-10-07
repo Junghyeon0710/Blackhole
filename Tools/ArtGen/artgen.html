@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Blackhole ArtGen</title>
+</head>
+<body>
+<pre id="out"></pre>
+<script>
+'use strict';
+/*
+  블랙홀 만들기 스프라이트 생성기.
+  행성·얼굴·블랙홀 그리기 함수는 blackhole.html 프로토타입 코드를 그대로 옮겼다.
+  run.mjs 가 헤드리스 브라우저로 이 페이지를 열고, #out 의 JSON(파일명 → PNG data URL)을 PNG 파일로 저장한다.
+
+  스프라이트 규칙: 월드 스프라이트는 "반지름 1 유닛" 기준이다.
+  즉 PPU = 그림 반지름(px) 이라서 scale = 원하는 반지름(유닛)으로 바로 쓴다.
+  UI 스프라이트는 4배 해상도로 그리고 PPU 400 (캔버스 기준 PPU 100) 이라서 CSS px 크기 그대로 나온다.
+*/
+
+/* ====================== 프로토타입 코드 (그대로) ====================== */
+const TIERS = [
+  { name:'운석',   r:11, c1:'#c9b8a8', c2:'#6b5a4d', type:'rock' },
+  { name:'달',     r:15, c1:'#fbf8f0', c2:'#a39f96', type:'moon' },
+  { name:'수성',   r:20, c1:'#ecd2ad', c2:'#8f6b48', type:'mercury' },
+  { name:'화성',   r:26, c1:'#ff9a66', c2:'#b8381c', type:'mars' },
+  { name:'금성',   r:32, c1:'#fff0b0', c2:'#e0a040', type:'venus' },
+  { name:'지구',   r:39, c1:'#6fd3ff', c2:'#1f5fd1', type:'earth' },
+  { name:'해왕성', r:47, c1:'#8aa0ff', c2:'#2a2fb8', type:'neptune' },
+  { name:'천왕성', r:56, c1:'#c8fff6', c2:'#3fb7c9', type:'uranus' },
+  { name:'토성',   r:66, c1:'#ffe9b3', c2:'#c99645', type:'saturn' },
+  { name:'목성',   r:78, c1:'#ffe0bf', c2:'#c0784a', type:'jupiter' },
+  { name:'태양',   r:92, c1:'#fff8c0', c2:'#ff9a1f', type:'sun' },
+];
+
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function blob(g, x, y, s, color, rnd, n=5){
+  g.fillStyle = color;
+  for (let i = 0; i < n; i++){
+    const a = rnd() * Math.PI * 2, d = rnd() * s * 0.6;
+    g.beginPath(); g.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, s * (0.45 + rnd() * 0.4), 0, Math.PI * 2); g.fill();
+  }
+}
+function crater(g, x, y, s, dark, light){
+  g.fillStyle = dark; g.beginPath(); g.arc(x, y, s, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = light; g.lineWidth = s * 0.25; g.beginPath(); g.arc(x, y, s, Math.PI * 0.1, Math.PI * 0.9); g.stroke();
+}
+function bands(g, R, cols, wobble, rnd){
+  const n = cols.length;
+  for (let i = 0; i < n; i++){
+    const y = -R + (i + 0.5) * (2 * R / n);
+    g.fillStyle = cols[i];
+    g.beginPath();
+    g.moveTo(-R, y - R / n * 0.5);
+    for (let x = -R; x <= R; x += R / 6) g.lineTo(x, y - R / n * 0.5 + Math.sin(x / R * 4 + i) * wobble * R);
+    g.lineTo(R, y + R / n * 0.45); g.lineTo(-R, y + R / n * 0.45); g.closePath(); g.fill();
+  }
+}
+function saturnRing(g, R, front){
+  g.save(); g.rotate(-0.28);
+  const a0 = front ? 0 : Math.PI, a1 = front ? Math.PI : Math.PI * 2;
+  g.lineCap = 'round';
+  g.strokeStyle = 'rgba(255,226,160,.95)'; g.lineWidth = R * 0.17;
+  g.beginPath(); g.ellipse(0, 0, R * 1.5, R * 0.4, 0, a0, a1); g.stroke();
+  g.strokeStyle = 'rgba(190,130,60,.85)'; g.lineWidth = R * 0.05;
+  g.beginPath(); g.ellipse(0, 0, R * 1.34, R * 0.34, 0, a0, a1); g.stroke();
+  g.restore();
+}
+function drawPlanet(g, t, R){
+  const T = TIERS[t], rnd = rng(t * 977 + 13);
+  g.save();
+  if (T.type === 'sun'){
+    const gl = g.createRadialGradient(0, 0, R * 0.85, 0, 0, R * 1.5);
+    gl.addColorStop(0, 'rgba(255,190,60,.55)'); gl.addColorStop(1, 'rgba(255,120,0,0)');
+    g.fillStyle = gl; g.beginPath(); g.arc(0, 0, R * 1.5, 0, Math.PI * 2); g.fill();
+  }
+  if (T.type === 'saturn') saturnRing(g, R, false);
+  const base = g.createRadialGradient(-R * .35, -R * .4, R * .1, 0, 0, R);
+  base.addColorStop(0, T.c1); base.addColorStop(1, T.c2);
+  g.beginPath(); g.arc(0, 0, R, 0, Math.PI * 2); g.fillStyle = base; g.fill();
+  g.save(); g.clip();
+  switch (T.type){
+    case 'rock':
+      for (let i = 0; i < 4; i++) crater(g, (rnd() - .5) * R * 1.3, (rnd() - .5) * R * 1.3, R * (.14 + rnd() * .12), 'rgba(60,40,30,.35)', 'rgba(255,255,255,.25)');
+      break;
+    case 'moon':
+      for (let i = 0; i < 5; i++) crater(g, (rnd() - .5) * R * 1.4, (rnd() - .5) * R * 1.4, R * (.1 + rnd() * .14), 'rgba(120,115,105,.35)', 'rgba(255,255,255,.5)');
+      break;
+    case 'mercury':
+      blob(g, -R * .3, R * .3, R * .4, 'rgba(120,85,55,.3)', rnd);
+      for (let i = 0; i < 4; i++) crater(g, (rnd() - .5) * R * 1.4, (rnd() - .5) * R * 1.4, R * (.08 + rnd() * .1), 'rgba(110,75,45,.35)', 'rgba(255,240,210,.4)');
+      break;
+    case 'mars':
+      blob(g, R * .25, R * .2, R * .45, 'rgba(140,30,15,.35)', rnd);
+      blob(g, -R * .45, -R * .1, R * .3, 'rgba(140,30,15,.3)', rnd);
+      g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.ellipse(0, -R * .95, R * .45, R * .2, 0, 0, Math.PI * 2); g.fill();
+      break;
+    case 'venus':
+      g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = R * .1; g.lineCap = 'round';
+      for (let i = 0; i < 4; i++){ g.beginPath(); g.arc(-R * .6 + i * R * .35, R * (rnd() - .5), R * (.5 + rnd() * .4), -1.1, .6); g.stroke(); }
+      break;
+    case 'earth':
+      blob(g, -R * .35, -R * .25, R * .42, '#52d17a', rnd, 6);
+      blob(g, R * .45, R * .35, R * .35, '#52d17a', rnd, 5);
+      blob(g, R * .5, -R * .55, R * .2, '#52d17a', rnd, 3);
+      g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = R * .09; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(-R * .7, R * .45); g.quadraticCurveTo(-R * .2, R * .3, R * .1, R * .55); g.stroke();
+      g.beginPath(); g.moveTo(R * .05, -R * .2); g.quadraticCurveTo(R * .4, -R * .35, R * .8, -R * .15); g.stroke();
+      break;
+    case 'neptune':
+      bands(g, R, ['rgba(255,255,255,.06)','rgba(0,0,60,.1)','rgba(255,255,255,.08)','rgba(0,0,60,.12)','rgba(255,255,255,.05)'], .04, rnd);
+      g.fillStyle = 'rgba(20,20,90,.45)'; g.beginPath(); g.ellipse(R * .35, -R * .35, R * .22, R * .12, -.2, 0, Math.PI * 2); g.fill();
+      break;
+    case 'uranus':
+      g.save(); g.rotate(1.35);
+      bands(g, R, ['rgba(255,255,255,.08)','rgba(0,80,90,.08)','rgba(255,255,255,.1)','rgba(0,80,90,.08)'], .02, rnd);
+      g.restore();
+      break;
+    case 'saturn':
+      bands(g, R, ['rgba(255,250,220,.25)','rgba(170,110,40,.22)','rgba(255,240,200,.2)','rgba(170,110,40,.25)','rgba(255,250,220,.2)','rgba(150,95,35,.25)'], .02, rnd);
+      break;
+    case 'jupiter':
+      bands(g, R, ['rgba(255,245,230,.3)','rgba(160,80,40,.35)','rgba(255,240,220,.3)','rgba(190,100,50,.4)','rgba(255,240,220,.3)','rgba(160,80,40,.35)','rgba(255,245,230,.25)'], .05, rnd);
+      g.fillStyle = 'rgba(200,70,50,.75)'; g.beginPath(); g.ellipse(R * .38, R * .32, R * .24, R * .14, 0, 0, Math.PI * 2); g.fill();
+      break;
+    case 'sun':
+      for (let i = 0; i < 14; i++){ g.fillStyle = 'rgba(255,255,200,.22)'; g.beginPath(); g.arc((rnd() - .5) * R * 1.7, (rnd() - .5) * R * 1.7, R * (.06 + rnd() * .1), 0, Math.PI * 2); g.fill(); }
+      break;
+  }
+  const sh = g.createRadialGradient(-R * .3, -R * .35, R * .5, 0, 0, R * 1.05);
+  sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, T.type === 'sun' ? 'rgba(200,60,0,.25)' : 'rgba(20,10,60,.38)');
+  g.fillStyle = sh; g.fillRect(-R, -R, R * 2, R * 2);
+  g.fillStyle = 'rgba(255,255,255,.5)';
+  g.beginPath(); g.ellipse(-R * .38, -R * .48, R * .26, R * .14, -.6, 0, Math.PI * 2); g.fill();
+  g.restore();
+  g.beginPath(); g.arc(0, 0, R, 0, Math.PI * 2);
+  g.lineWidth = Math.max(1, R * .055); g.strokeStyle = T.type === 'sun' ? 'rgba(170,70,0,.6)' : 'rgba(25,12,60,.55)'; g.stroke();
+  if (T.type === 'saturn') saturnRing(g, R, true);
+  g.restore();
+}
+function drawFace(g, x, y, R, mood, blink){
+  if (R < 4) return;
+  const ink = '#2b1740', ex = R * .3, ey = y + R * .04, er = Math.max(1.2, R * .1);
+  g.fillStyle = ink; g.strokeStyle = ink; g.lineCap = 'round';
+  if (mood === 'happy'){
+    g.lineWidth = Math.max(1.2, R * .065);
+    for (const s of [-1, 1]){ g.beginPath(); g.arc(x + s * ex, ey + er * .6, er * 1.1, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); }
+  } else if (mood === 'scared'){
+    g.lineWidth = Math.max(1.2, R * .06);
+    for (const s of [-1, 1]){
+      const ox = x + s * ex;
+      g.beginPath(); g.moveTo(ox + s * er * .8, ey - er * .8); g.lineTo(ox - s * er * .8, ey);
+      g.lineTo(ox + s * er * .8, ey + er * .8); g.stroke();
+    }
+  } else if (blink){
+    g.lineWidth = Math.max(1, R * .05);
+    for (const s of [-1, 1]){ g.beginPath(); g.moveTo(x + s * ex - er, ey); g.lineTo(x + s * ex + er, ey); g.stroke(); }
+  } else {
+    for (const s of [-1, 1]){
+      g.beginPath(); g.ellipse(x + s * ex, ey, er, er * 1.25, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#fff'; g.beginPath(); g.arc(x + s * ex - er * .3, ey - er * .45, er * .38, 0, Math.PI * 2); g.fill(); g.fillStyle = ink;
+    }
+  }
+  if (R >= 7){
+    g.fillStyle = 'rgba(255,110,150,.38)';
+    for (const s of [-1, 1]){ g.beginPath(); g.ellipse(x + s * R * .52, y + R * .27, R * .13, R * .08, 0, 0, Math.PI * 2); g.fill(); }
+  }
+  g.lineWidth = Math.max(1, R * .05);
+  g.beginPath();
+  if (mood === 'scared') g.arc(x, y + R * .36, R * .08, 0, Math.PI * 2);
+  else g.arc(x, y + R * .2, R * .1, Math.PI * .15, Math.PI * .85);
+  g.stroke();
+}
+
+/* 프로토타입 drawBlackHole 을 세 겹(빛무리, 강착원반, 코어)으로 나눈 것. 원반만 회전한다. */
+function bhGlow(g, R){
+  const glow = g.createRadialGradient(0, 0, R * .6, 0, 0, R * 2.6);
+  glow.addColorStop(0, 'rgba(255,170,80,.6)'); glow.addColorStop(.4, 'rgba(255,90,140,.25)'); glow.addColorStop(1, 'rgba(120,60,255,0)');
+  g.fillStyle = glow; g.beginPath(); g.arc(0, 0, R * 2.6, 0, Math.PI * 2); g.fill();
+}
+function bhDisk(g, R){
+  for (let i = 0; i < 3; i++){
+    g.strokeStyle = ['rgba(255,220,140,.9)','rgba(255,140,90,.7)','rgba(255,110,180,.6)'][i];
+    g.lineWidth = R * (.22 - i * .05);
+    g.beginPath(); g.ellipse(0, 0, R * (1.55 + i * .25), R * (.55 + i * .1), i * .9, 0, Math.PI * 1.4); g.stroke();
+  }
+}
+function bhCore(g, R){
+  g.fillStyle = '#000'; g.beginPath(); g.arc(0, 0, R, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = 'rgba(255,240,210,.9)'; g.lineWidth = Math.max(1.5, R * .07); g.stroke();
+}
+
+/* ====================== 출력 도우미 ====================== */
+const OUT = { files: {}, manifest: {} };
+function canvas(w, h){ const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function emit(path, c, meta){
+  OUT.files[path] = c.toDataURL('image/png');
+  OUT.manifest[path] = Object.assign({ w: c.width, h: c.height }, meta);
+}
+/* 가운데 기준으로 그리는 정사각 스프라이트. radiusPx 가 1 유닛이 되도록 PPU 를 정한다. */
+function centered(path, size, radiusPx, draw, meta){
+  const c = canvas(size, size), g = c.getContext('2d');
+  g.translate(size / 2, size / 2);
+  draw(g);
+  emit(path, c, Object.assign({ ppu: radiusPx, kind: 'world', mip: true }, meta || {}));
+}
+
+/* ====================== 월드 스프라이트 ====================== */
+const K = 3; // 월드 1 단위당 3px. 큰 태블릿에서도 흐려지지 않을 만큼
+TIERS.forEach((T, i) => {
+  const R = T.r * K;
+  const pad = (T.type === 'saturn' || T.type === 'sun') ? 1.62 : 1.08;
+  const size = Math.ceil(R * 2 * pad) + 4;
+  centered(`Planets/planet_${String(i).padStart(2, '0')}.png`, size, R, g => drawPlanet(g, i, R), { tier: i });
+});
+
+const FR = 128; // 얼굴 기준 반지름
+for (const [name, mood, blink] of [['normal', 'normal', false], ['blink', 'normal', true], ['happy', 'happy', false], ['scared', 'scared', false]]){
+  centered(`Faces/face_${name}.png`, FR * 2, FR, g => drawFace(g, 0, 0, FR, mood, blink));
+}
+
+const BR = 100; // 블랙홀 기준 반지름
+centered('BlackHole/bh_glow.png', Math.ceil(BR * 2.6 * 2) + 4, BR, g => bhGlow(g, BR));
+centered('BlackHole/bh_disk.png', Math.ceil(BR * 2.2 * 2) + 4, BR, g => bhDisk(g, BR));
+centered('BlackHole/bh_core.png', Math.ceil((BR + 6) * 2) + 4, BR, g => bhCore(g, BR));
+
+/* 경기장 바탕: 프로토타입 render() 의 경기장 그라디언트 */
+const AR = 512;
+centered('FX/arena_fill.png', AR * 2 + 4, AR, g => {
+  const ag = g.createRadialGradient(0, 0, 0, 0, 0, AR);
+  ag.addColorStop(0, 'rgba(150,130,255,.14)'); ag.addColorStop(.75, 'rgba(90,70,200,.07)'); ag.addColorStop(1, 'rgba(170,150,255,.16)');
+  g.fillStyle = ag; g.beginPath(); g.arc(0, 0, AR, 0, Math.PI * 2); g.fill();
+}, { mip: false });
+
+/* 흰 원: 파티클, 별, 선 그리기(가운데 픽셀)에 같이 쓴다 */
+centered('FX/disc.png', 64, 30, g => { g.fillStyle = '#fff'; g.beginPath(); g.arc(0, 0, 30, 0, Math.PI * 2); g.fill(); });
+/* 부드러운 빛: 중심 코어 빛 */
+centered('FX/glow.png', 128, 64, g => {
+  const gr = g.createRadialGradient(0, 0, 0, 0, 0, 64);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 64, 0, Math.PI * 2); g.fill();
+});
+
+/* ====================== UI 스프라이트 (4배 해상도, PPU 400) ====================== */
+const U = 4;
+function roundRectPath(g, x, y, w, h, r, keepPath){
+  if (!keepPath) g.beginPath();
+  g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.arcTo(x + w, y, x + w, y + r, r);
+  g.lineTo(x + w, y + h - r); g.arcTo(x + w, y + h, x + w - r, y + h, r);
+  g.lineTo(x + r, y + h); g.arcTo(x, y + h, x, y + h - r, r);
+  g.lineTo(x, y + r); g.arcTo(x, y, x + r, y, r); g.closePath();
+}
+/* 9-slice 용 흰 둥근 사각형. 모서리 반지름 r (CSS px) */
+function uiRound(r){
+  const R = r * U, size = R * 2 + 8, c = canvas(size, size), g = c.getContext('2d');
+  roundRectPath(g, 0, 0, size, size, R); g.fillStyle = '#fff'; g.fill();
+  const b = R + 2;
+  emit(`UI/ui_round_r${r}.png`, c, { ppu: 400, kind: 'ui', border: [b, b, b, b] });
+}
+/* 9-slice 용 테두리. 두께 w (CSS px), 테두리는 상자 안쪽에 그린다 (CSS border 와 같음) */
+function uiOutline(r, w, name){
+  const R = r * U, W = w * U, size = R * 2 + 8, c = canvas(size, size), g = c.getContext('2d');
+  roundRectPath(g, 0, 0, size, size, R);
+  roundRectPath(g, W, W, size - 2 * W, size - 2 * W, Math.max(0, R - W), true);
+  g.fillStyle = '#fff'; g.fill('evenodd');
+  const b = R + 2;
+  emit(`UI/${name}.png`, c, { ppu: 400, kind: 'ui', border: [b, b, b, b] });
+}
+[5, 12, 14, 16, 18, 22, 28].forEach(uiRound);
+uiOutline(28, 2, 'ui_outline_r28');
+uiOutline(14, 1.5, 'ui_outline_r14');
+uiOutline(16, 1.5, 'ui_outline_r16');
+
+/* 다음 행성 받침: 58px 원, 위쪽이 밝은 원형 그라디언트 + 점선 테두리 */
+(() => {
+  const S = 58 * U, c = canvas(S, S), g = c.getContext('2d');
+  const cx = S / 2, cy = S / 2, R = S / 2;
+  const gr = g.createRadialGradient(cx, cy * .8, 0, cx, cy * .8, R * 1.1);
+  gr.addColorStop(0, 'rgba(255,255,255,.12)'); gr.addColorStop(1, 'rgba(255,255,255,.02)');
+  g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = 'rgba(201,192,242,.35)'; g.lineWidth = 2 * U; g.setLineDash([6 * U, 4 * U]);
+  g.beginPath(); g.arc(cx, cy, R - U, 0, Math.PI * 2); g.stroke();
+  emit('UI/ui_pod_ring.png', c, { ppu: 400, kind: 'ui' });
+})();
+
+/* 배너 자리 빗금 타일 (45도, 10px 간격) */
+(() => {
+  const S = 28 * U, c = canvas(S, S), g = c.getContext('2d');
+  g.fillStyle = 'rgba(255,255,255,.04)'; g.fillRect(0, 0, S, S);
+  g.fillStyle = 'rgba(255,255,255,.07)';
+  for (let k = -2; k <= 2; k++){
+    g.beginPath();
+    const o = k * S;
+    g.moveTo(o, S); g.lineTo(o + S / 2, S); g.lineTo(o + S * 1.5, 0); g.lineTo(o + S, 0); g.closePath(); g.fill();
+  }
+  emit('UI/ui_banner_tile.png', c, { ppu: 400, kind: 'ui', wrap: 'repeat' });
+})();
+/* 가로 점선 타일 */
+(() => {
+  const c = canvas(10 * U, 2 * U), g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, 6 * U, 2 * U);
+  emit('UI/ui_dash_h.png', c, { ppu: 400, kind: 'ui', wrap: 'repeat' });
+})();
+
+/* 가짜 광고 상자: 빗금 + 점선 테두리, 320 x 498 (9:14) */
+(() => {
+  const S = 2, W = 320 * S, H = 498 * S, c = canvas(W, H), g = c.getContext('2d');
+  roundRectPath(g, 0, 0, W, H, 22 * S); g.save(); g.clip();
+  g.fillStyle = '#25255a'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#2d2d6a';
+  g.save(); g.translate(W / 2, H / 2); g.rotate(Math.PI / 4);
+  const L = Math.hypot(W, H);
+  for (let x = -L; x < L; x += 36 * S) g.fillRect(x + 18 * S, -L, 18 * S, L * 2);
+  g.restore(); g.restore();
+  g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 2 * S; g.setLineDash([7 * S, 5 * S]);
+  roundRectPath(g, S, S, W - 2 * S, H - 2 * S, 21 * S); g.stroke();
+  emit('UI/ui_adbox.png', c, { ppu: 200, kind: 'ui' });
+})();
+
+/* ====================== 아이콘 (24 x 24 CSS px 격자) ====================== */
+function icon(name, draw){
+  const c = canvas(24 * U, 24 * U), g = c.getContext('2d');
+  g.scale(U, U); g.lineCap = 'round'; g.lineJoin = 'round';
+  draw(g);
+  emit(`UI/Icons/${name}.png`, c, { ppu: 400, kind: 'ui', mip: true });
+}
+function arrowArc(g, cx, cy, r, a0, a1, color, w){
+  g.strokeStyle = color; g.lineWidth = w;
+  g.beginPath(); g.arc(cx, cy, r, a0, a1); g.stroke();
+  const ex = cx + Math.cos(a1) * r, ey = cy + Math.sin(a1) * r;
+  const tx = -Math.sin(a1), ty = Math.cos(a1); // 진행 방향
+  const nx = Math.cos(a1), ny = Math.sin(a1);
+  g.fillStyle = color; g.beginPath();
+  g.moveTo(ex + tx * 3.6, ey + ty * 3.6);
+  g.lineTo(ex + nx * 3.4 - tx * 0.6, ey + ny * 3.4 - ty * 0.6);
+  g.lineTo(ex - nx * 3.4 - tx * 0.6, ey - ny * 3.4 - ty * 0.6);
+  g.closePath(); g.fill();
+}
+icon('icon_swap', g => {
+  roundRectPath(g, 2, 2, 20, 20, 5); g.fillStyle = '#4f9dff'; g.fill();
+  arrowArc(g, 12, 12, 5.6, Math.PI * 1.05, Math.PI * 1.85, '#fff', 2.2);
+  arrowArc(g, 12, 12, 5.6, Math.PI * 0.05, Math.PI * 0.85, '#fff', 2.2);
+});
+icon('icon_clean', g => {
+  g.translate(12, 12); g.rotate(Math.PI / 4);
+  g.fillStyle = '#c98a4a'; roundRectPath(g, -1.3, -12, 2.6, 13, 1.2); g.fill();
+  g.fillStyle = '#ff6f6f'; roundRectPath(g, -4.6, 0, 9.2, 2.6, 1); g.fill();
+  g.fillStyle = '#ffd85e';
+  g.beginPath(); g.moveTo(-4.6, 2.4); g.lineTo(4.6, 2.4); g.lineTo(6.6, 10.5); g.lineTo(-6.6, 10.5); g.closePath(); g.fill();
+  g.strokeStyle = '#e0a526'; g.lineWidth = 0.9;
+  for (const x of [-3, 0, 3]){ g.beginPath(); g.moveTo(x * 0.8, 3.4); g.lineTo(x * 1.25, 10); g.stroke(); }
+});
+function speaker(g){
+  g.fillStyle = '#fff7ec';
+  g.beginPath(); g.moveTo(3, 9); g.lineTo(7, 9); g.lineTo(12, 4.5); g.lineTo(12, 19.5); g.lineTo(7, 15); g.lineTo(3, 15); g.closePath(); g.fill();
+}
+icon('icon_sound_on', g => {
+  speaker(g);
+  g.strokeStyle = '#fff7ec'; g.lineWidth = 2;
+  g.beginPath(); g.arc(12, 12, 4.4, -0.85, 0.85); g.stroke();
+  g.beginPath(); g.arc(12, 12, 8.2, -0.85, 0.85); g.stroke();
+});
+icon('icon_sound_off', g => {
+  speaker(g);
+  g.strokeStyle = '#ff8fb8'; g.lineWidth = 2.2;
+  g.beginPath(); g.moveTo(15.2, 9); g.lineTo(21.2, 15); g.moveTo(21.2, 9); g.lineTo(15.2, 15); g.stroke();
+});
+function phone(g){
+  g.strokeStyle = '#fff7ec'; g.lineWidth = 2; roundRectPath(g, 8, 3.5, 8, 17, 2.2); g.stroke();
+  g.fillStyle = '#fff7ec'; g.beginPath(); g.arc(12, 17.2, 0.9, 0, Math.PI * 2); g.fill();
+}
+icon('icon_vib_on', g => {
+  phone(g);
+  g.strokeStyle = '#fff7ec'; g.lineWidth = 1.7;
+  for (const s of [-1, 1]){
+    const x = 12 + s * 7.4;
+    g.beginPath(); g.moveTo(x, 7.5); g.lineTo(x - s * 1.6, 9.5); g.lineTo(x, 11.5); g.lineTo(x - s * 1.6, 13.5); g.lineTo(x, 15.5); g.stroke();
+  }
+});
+icon('icon_vib_off', g => {
+  phone(g);
+  g.strokeStyle = '#ff8fb8'; g.lineWidth = 2.2;
+  g.beginPath(); g.moveTo(4, 4); g.lineTo(20, 20); g.stroke();
+});
+icon('icon_tv', g => {
+  g.strokeStyle = '#2b1f6b'; g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(8, 2.5); g.lineTo(12, 6.5); g.lineTo(16, 2.5); g.stroke();
+  g.fillStyle = '#2b1f6b'; roundRectPath(g, 1.5, 6.5, 21, 15, 3.2); g.fill();
+  g.fillStyle = '#ffd85e'; roundRectPath(g, 3.8, 8.8, 16.4, 10.4, 1.8); g.fill();
+  g.fillStyle = '#2b1f6b'; g.beginPath(); g.moveTo(10.2, 11); g.lineTo(15.2, 14); g.lineTo(10.2, 17); g.closePath(); g.fill();
+});
+icon('icon_trophy', g => {
+  g.strokeStyle = '#e0a526'; g.lineWidth = 2;
+  g.beginPath(); g.arc(6, 8.5, 3.2, Math.PI * 0.5, Math.PI * 1.5); g.stroke();
+  g.beginPath(); g.arc(18, 8.5, 3.2, -Math.PI * 0.5, Math.PI * 0.5); g.stroke();
+  g.fillStyle = '#ffd85e';
+  g.beginPath(); g.moveTo(5.5, 3); g.lineTo(18.5, 3); g.lineTo(18, 9); g.quadraticCurveTo(17, 14.5, 12, 15); g.quadraticCurveTo(7, 14.5, 6, 9); g.closePath(); g.fill();
+  g.fillStyle = '#e0a526'; g.fillRect(10.8, 14.6, 2.4, 3.6);
+  g.fillStyle = '#c98a4a'; roundRectPath(g, 7, 18, 10, 3.6, 1); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(9, 6.5, 1.2, 2.4, 0, 0, Math.PI * 2); g.fill();
+});
+icon('icon_touch', g => {
+  g.fillStyle = '#ffd9b0'; g.strokeStyle = '#c98a4a'; g.lineWidth = 1.1;
+  roundRectPath(g, 9.4, 1.8, 4.6, 13, 2.3); g.fill(); g.stroke();
+  roundRectPath(g, 6.2, 10, 13.6, 12, 4.2); g.fill(); g.stroke();
+  g.fillStyle = '#ffd9b0'; g.fillRect(9.95, 9.4, 3.5, 3);
+  g.strokeStyle = '#c98a4a';
+  g.beginPath(); g.moveTo(14.4, 10.6); g.lineTo(14.4, 13.4); g.moveTo(17.2, 11.4); g.lineTo(17.2, 13.8); g.stroke();
+});
+icon('icon_warning', g => {
+  g.fillStyle = '#ffd85e'; g.strokeStyle = '#e0a526'; g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(12, 2.6); g.lineTo(22, 20.6); g.lineTo(2, 20.6); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#3a2300'; roundRectPath(g, 10.9, 8, 2.2, 7.4, 1.1); g.fill();
+  g.beginPath(); g.arc(12, 17.9, 1.3, 0, Math.PI * 2); g.fill();
+});
+
+document.getElementById('out').textContent = JSON.stringify(OUT);
+</script>
+</body>
+</html>

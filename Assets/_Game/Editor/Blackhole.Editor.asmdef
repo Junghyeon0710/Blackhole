@@ -1,0 +1,22 @@
+{
+    "name": "Blackhole.Editor",
+    "rootNamespace": "Blackhole.EditorTools",
+    "references": [
+        "Blackhole",
+        "Unity.TextMeshPro",
+        "Unity.TextMeshPro.Editor",
+        "UnityEngine.UI",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
