@@ -19,6 +19,8 @@
 
 **두 태양이 만나는 순간 블랙홀이 태어나고, 판 위의 행성을 남김없이 삼켜 버립니다.**
 
+그리고 블랙홀이 사라진 자리에서, 새로운 우주가 열려요.
+
 <br>
 
 ## 엄지 하나면 충분해요
@@ -43,6 +45,21 @@
     <td align="center"><img src="docs/images/04_blackhole.jpg" width="240"><br><sub>태양 + 태양 = 블랙홀</sub></td>
     <td align="center"><img src="docs/images/05_danger.jpg" width="240"><br><sub>위험! 넘치기 직전</sub></td>
     <td align="center"><img src="docs/images/06_result.jpg" width="240"><br><sub>최고 기록 경신</sub></td>
+  </tr>
+</table>
+
+## 블랙홀 너머엔 또 다른 우주
+
+블랙홀이 판을 다 삼키고 사라지면, 그 자리에서 새 우주가 동그랗게 번져 나와요.
+보랏빛 우주 다음엔 깊은 바다, 그다음엔 분홍 성운, 초록 오로라, 노을, 황금빛 밤.
+판은 텅 비었지만 점수는 그대로예요. 태양 두 개를 다시 모으면 다음 우주가 기다리고 있어요.
+
+이번 판엔 몇 번째 우주까지 갈 수 있을까요? 가장 멀리 간 우주는 기록으로 남아요.
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/07_universe_open.jpg" width="240"><br><sub>블랙홀 자리에서 열리는 새 우주</sub></td>
+    <td align="center"><img src="docs/images/08_universe_arrived.jpg" width="240"><br><sub>두 번째 우주 도착!</sub></td>
   </tr>
 </table>
 
