@@ -3,11 +3,9 @@
 가운데로 당기는 중력 속에서 같은 행성끼리 합쳐 태양을 만들고, **태양 두 개로 블랙홀을 터뜨리는** 한 손 물리 합체 퍼즐입니다.
 
 
-<p align="center">
-  <img src="docs/media/highlight.gif" width="320" alt="하이라이트 영상">
-  <br>
-  <a href="docs/media/highlight.mp4">🔊 소리 있는 고화질 영상 (MP4 1080×1920, 60fps)</a>
-</p>
+https://github.com/user-attachments/assets/2509f987-4e1d-4af3-b7c1-c342b3ec6ecd
+
+<sub>🔊 소리를 켜고 보세요. 원본(1080×1920, 60fps): <a href="docs/media/highlight.mp4">docs/media/highlight.mp4</a></sub>
 
 ## 플레이 화면
 
@@ -86,9 +84,11 @@ Test Runner(Window > General > Test Runner)에서 실행합니다.
 ## 하이라이트 영상 다시 만들기
 
 1. 플레이 모드에서 `Scripts/Dev` 의 `FrameRecorder`(고정 시간 간격 녹화 + 효과음 시점 기록)와 `ScenarioDirector`(정해 둔 판을 틱 단위로 재현),
-   `DemoPlayer`(자동 플레이)로 장면을 `Recordings/` 에 녹화합니다.
+   `DemoPlayer`(자동 플레이)로 장면을 `Recordings/` 에 1080×1920, 60fps 로 녹화합니다.
 2. `python Tools/Video/make_highlight.py` 가 `Tools/Video/edit.json` 대본(구간, 속도, 자막)대로 효과음을 합성하고,
-   Blender 5.2(백그라운드)로 컷·크로스페이드·자막·엔딩을 붙여 `docs/media/highlight.mp4` 와 `highlight.gif` 를 만듭니다.
+   Blender 5.2(백그라운드)로 컷·크로스페이드·자막·엔딩을 붙여 `docs/media/highlight.mp4`(원본)를 만들고,
+   GitHub README 에 올릴 720p 판(10MB 이하)과 GIF 를 `Recordings/highlight/` 에 만듭니다.
+3. README 맨 위 영상은 720p 판을 GitHub 의 README 편집 화면에 끌어다 놓아 받은 주소(`user-attachments`)입니다.
 
 ## 광고
 
