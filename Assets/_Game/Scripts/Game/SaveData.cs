@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Blackhole
 {
-    /// <summary>판이 끝나도 남는 값. PlayerPrefs 키는 기획서 8장 (best, disc, bh, sound) + 진동 설정(vib).</summary>
+    /// <summary>판이 끝나도 남는 값. PlayerPrefs 키는 기획서 8장 (best, disc, bh, sound) + 진동 설정(vib), 가장 멀리 간 우주(uni).</summary>
     public static class SaveData
     {
         const string BestKey = "best";
@@ -10,6 +10,7 @@ namespace Blackhole
         const string BlackHolesKey = "bh";
         const string SoundKey = "sound";
         const string VibrationKey = "vib";
+        const string FarthestUniverseKey = "uni";
 
         public static int Best
         {
@@ -28,6 +29,13 @@ namespace Blackhole
         {
             get => PlayerPrefs.GetInt(BlackHolesKey, 0);
             set { PlayerPrefs.SetInt(BlackHolesKey, value); PlayerPrefs.Save(); }
+        }
+
+        /// <summary>한 판에서 가장 멀리 간 우주 (0 = 첫 번째 우주).</summary>
+        public static int FarthestUniverse
+        {
+            get => PlayerPrefs.GetInt(FarthestUniverseKey, 0);
+            set { PlayerPrefs.SetInt(FarthestUniverseKey, value); PlayerPrefs.Save(); }
         }
 
         public static bool Sound

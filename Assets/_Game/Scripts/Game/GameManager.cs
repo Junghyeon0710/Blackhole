@@ -15,6 +15,7 @@ namespace Blackhole
     /// 상태 전환(메뉴 → 플레이 → 게임 오버)과 판 시작·종료. 규칙은 <see cref="GameSession"/>,
     /// 그리기는 View, 화면은 UIManager 가 맡고 여기서는 이벤트를 이어 준다.
     /// 블랙홀 이벤트는 Session.BlackHole.Active, 광고 중은 <see cref="Paused"/> 로 나타낸다.
+    /// 블랙홀이 판을 다 삼키면 다음 우주로 넘어간다 (<see cref="Universe"/>, 판마다 첫 번째 우주부터).
     /// </summary>
     [DefaultExecutionOrder(-50)]
     public sealed class GameManager : MonoBehaviour
@@ -24,6 +25,7 @@ namespace Blackhole
         [SerializeField] Launcher launcher;
         [SerializeField] ArenaView arena;
         [SerializeField] BlackHoleView blackHoleView;
+        [SerializeField] UniverseView universeView;
         [SerializeField] EffectsManager effects;
         [SerializeField] UIManager ui;
         [SerializeField] AudioManager sound;
@@ -35,6 +37,7 @@ namespace Blackhole
         readonly System.Random random = new System.Random();
         int retries;
         Coroutine resultRoutine;
+        bool blackHoleWasDone;
 
         public GameSession Session { get; private set; }
         public PlanetData Data => planetData;
@@ -43,6 +46,8 @@ namespace Blackhole
         public bool Paused { get; private set; }
         public IAdsService Ads { get; private set; }
         public int Discovered { get; private set; }
+        /// <summary>이번 판에서 지금 있는 우주 (0 = 첫 번째 우주). 블랙홀이 판을 다 삼킬 때마다 하나씩 오른다.</summary>
+        public int Universe { get; private set; }
         public bool SoundOn => sound.Enabled;
         public bool AcceptsAimInput => State == GameState.Playing && !Paused;
 
@@ -66,6 +71,8 @@ namespace Blackhole
             Session.Ended += OnEnded;
             Session.Score.Changed += score => ui.SetScore(score, Session.Score.Best);
             Session.Spawner.Changed += () => ui.RefreshNext();
+            universeView.PaletteChanged += ui.SetPalette;
+            universeView.Arrived += OnUniverseArrived;
 
             planetRenderer.Bind(Session, planetData);
             launcher.Bind(this);
@@ -88,7 +95,8 @@ namespace Blackhole
         {
             ui.SetScore(0, Session.Score.Best);
             ui.RefreshCollection(Discovered);
-            ui.ShowStart(Session.Score.Best, SaveData.BlackHoles);
+            ui.SetUniverse(0, default);
+            ui.ShowStart(Session.Score.Best, SaveData.BlackHoles, SaveData.FarthestUniverse);
             Ads.ShowBanner();
         }
 
@@ -97,8 +105,23 @@ namespace Blackhole
             if (Paused) return;
             float dt = (float)Tuning.TickDt;
             Session.Tick(Tuning.TickDt);
+            CheckBlackHoleFinished();
             effects.Tick(dt);
             ui.FloatingTexts.Tick(dt);
+        }
+
+        // 블랙홀이 판을 다 삼킨 순간(사라지기 시작할 때) 그 자리에서 다음 우주가 퍼져 나온다
+        void CheckBlackHoleFinished()
+        {
+            var bh = Session.BlackHole;
+            bool done = bh.Active && bh.Done;
+            if (done && !blackHoleWasDone)
+            {
+                Universe++;
+                if (Universe > SaveData.FarthestUniverse) SaveData.FarthestUniverse = Universe;
+                universeView.Reveal(Universe, ViewMetrics.WorldToUnity(bh.X, bh.Y));
+            }
+            blackHoleWasDone = done;
         }
 
         // ───────────────────────── 판 흐름 ─────────────────────────
@@ -128,6 +151,10 @@ namespace Blackhole
             ui.FloatingTexts.Clear();
             ui.SetScore(0, Session.Score.Best);
             ui.RefreshNext();
+            Universe = 0;
+            blackHoleWasDone = false;
+            universeView.Show(0);
+            ui.SetUniverse(0, default);
         }
 
         public void Launch()
@@ -162,7 +189,10 @@ namespace Blackhole
 
         public void Share()
         {
-            string text = $"블랙홀 만들기에서 {Korean.Number(Session.Score.Score)}점! {planetData.NameOf(Session.TopTier)}까지 만들었어. 나보다 잘할 수 있어? {NativeShare.StoreUrl}";
+            string reached = Universe > 0
+                ? $"{Korean.Ordinal(Universe + 1)} 우주까지 갔어"
+                : $"{planetData.NameOf(Session.TopTier)}까지 만들었어";
+            string text = $"블랙홀 만들기에서 {Korean.Number(Session.Score.Score)}점! {reached}. 나보다 잘할 수 있어? {NativeShare.StoreUrl}";
             if (NativeShare.Share(text, "점수 자랑하기")) return;
             GUIUtility.systemCopyBuffer = text;
             ui.Toast("자랑 문구를 복사했어요");
@@ -266,6 +296,15 @@ namespace Blackhole
                 ui.RefreshCollection(Discovered);
             }
             ui.FloatingTexts.Add("+" + Tuning.BlackHoleBonus, x, y, 1.4f, 34, Butter);
+            universeView.Prepare(Universe + 1); // 다 삼키는 동안 다음 우주 배경을 미리 굽는다
+        }
+
+        void OnUniverseArrived(int universe)
+        {
+            ui.SetUniverse(universe, universeView.Data.Get(universe).nebula1);
+            if (universe == 0) return;
+            ui.Toast($"{Korean.Ordinal(universe + 1)} 우주 도착!");
+            sound.Discover();
         }
 
         void OnBodyRemovedWithBurst(Body b)
@@ -289,7 +328,7 @@ namespace Blackhole
         {
             yield return new WaitForSeconds((float)Tuning.GameOverDelay);
             resultRoutine = null;
-            ui.ShowResult(score, isNew, Session.TopTier, Session.Score.Best, !Session.ReviveUsed);
+            ui.ShowResult(score, isNew, Session.TopTier, Session.Score.Best, !Session.ReviveUsed, Universe);
         }
     }
 }

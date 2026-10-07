@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -38,6 +39,11 @@ namespace Blackhole.EditorTools
 
         static BlackholeSetup.Assets s_Assets;
 
+        // 우주 색을 따라가는 UI: 흐린 글자·테두리(Line), 버튼 바탕(Panel), 도감 바탕(Deep)
+        static readonly List<Graphic> s_LineTinted = new List<Graphic>();
+        static readonly List<Graphic> s_PanelTinted = new List<Graphic>();
+        static readonly List<Graphic> s_DeepTinted = new List<Graphic>();
+
         public static void Build(BlackholeSetup.Assets assets)
         {
             s_Assets = assets;
@@ -65,11 +71,16 @@ namespace Blackhole.EditorTools
             var audio = Child("Audio", managers.transform).AddComponent<AudioManager>();
             var ads = Child("Ads (Mock)", managers.transform).AddComponent<MockAdsService>();
 
-            // ── 배경 (흔들리지 않음) ──
+            // ── 배경 (흔들리지 않음). 다음 우주는 원형 마스크 안에서만 보이는 한 장을 더 깐다 ──
             var bgGo = new GameObject("Background");
             var background = bgGo.AddComponent<Background>();
             var gradient = SpriteChild("Gradient", bgGo.transform, null, -100);
+            var revealGradient = MaskedSpriteChild("RevealGradient", bgGo.transform, -99);
             var stars = ShapeChild("Stars", bgGo.transform, -90);
+            var revealMask = Child("RevealMask", bgGo.transform).AddComponent<SpriteMask>();
+            revealMask.sprite = Art("FX/disc.png");
+            revealMask.gameObject.SetActive(false);
+            var universe = bgGo.AddComponent<UniverseView>();
 
             // ── 월드 (화면 흔들림을 받는 루트) ──
             var world = new GameObject("World").transform;
@@ -77,6 +88,7 @@ namespace Blackhole.EditorTools
             var arenaGo = Child("Arena", world);
             var arena = arenaGo.AddComponent<ArenaView>();
             var arenaFill = SpriteChild("Fill", arenaGo.transform, Art("FX/arena_fill.png"), -80);
+            var arenaRevealFill = MaskedSpriteChild("RevealFill", arenaGo.transform, -79);
             var arenaLines = ShapeChild("Lines", arenaGo.transform, -70);
             var coreGlow = SpriteChild("CoreGlow", arenaGo.transform, Art("FX/glow.png"), -60);
 
@@ -118,11 +130,19 @@ namespace Blackhole.EditorTools
 
             Wire.Set(background, "rig", rig);
             Wire.Set(background, "gradient", gradient);
+            Wire.Set(background, "revealGradient", revealGradient);
             Wire.Set(background, "stars", stars);
 
             Wire.Set(arena, "fill", arenaFill);
+            Wire.Set(arena, "revealFill", arenaRevealFill);
             Wire.Set(arena, "coreGlow", coreGlow);
             Wire.Set(arena, "lines", arenaLines);
+
+            Wire.Set(universe, "data", assets.UniverseData);
+            Wire.Set(universe, "rig", rig);
+            Wire.Set(universe, "background", background);
+            Wire.Set(universe, "arena", arena);
+            Wire.Set(universe, "mask", revealMask);
 
             Wire.Set(launcher, "rig", rig);
             Wire.Set(launcher, "waiting", waiting);
@@ -144,6 +164,7 @@ namespace Blackhole.EditorTools
             Wire.Set(game, "launcher", launcher);
             Wire.Set(game, "arena", arena);
             Wire.Set(game, "blackHoleView", bhView);
+            Wire.Set(game, "universeView", universe);
             Wire.Set(game, "effects", effects);
             Wire.Set(game, "ui", ui.Manager);
             Wire.Set(game, "sound", audio);
@@ -177,6 +198,15 @@ namespace Blackhole.EditorTools
             sr.sprite = sprite;
             sr.sharedMaterial = s_Assets.SpriteMaterial;
             sr.sortingOrder = order;
+            return sr;
+        }
+
+        /// <summary>원형 마스크(RevealMask) 안에서만 보이는 스프라이트. 우주가 바뀔 때만 켠다.</summary>
+        static SpriteRenderer MaskedSpriteChild(string name, Transform parent, int order)
+        {
+            var sr = SpriteChild(name, parent, null, order);
+            sr.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
+            sr.enabled = false;
             return sr;
         }
 
@@ -215,6 +245,9 @@ namespace Blackhole.EditorTools
             canvasGo.AddComponent<GraphicRaycaster>();
             var manager = canvasGo.AddComponent<UIManager>();
             var root = (RectTransform)canvasGo.transform;
+            s_LineTinted.Clear();
+            s_PanelTinted.Clear();
+            s_DeepTinted.Clear();
 
             var safe = Stretch(Node("SafeArea", root));
             safe.gameObject.AddComponent<SafeArea>();
@@ -222,12 +255,14 @@ namespace Blackhole.EditorTools
             // ── HUD: 점수(왼쪽), 다음 행성(가운데), 최고 점수(오른쪽) ──
             var hud = Band(Node("HUD", safe), true, 0, HudHeight);
             var scoreBox = Place(Node("Score", hud), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(14, -47.5f), new Vector2(140, 46));
-            Band(Label("Label", scoreBox, "점수", 13, InkSoft, TextAlignmentOptions.TopLeft).rectTransform, true, 0, 13);
+            var scoreCaption = Label("Label", scoreBox, "점수", 13, InkSoft, TextAlignmentOptions.TopLeft);
+            Band(scoreCaption.rectTransform, true, 0, 13);
             var scoreValue = Label("Value", scoreBox, "0", 30, Ink, TextAlignmentOptions.TopLeft);
             Band(scoreValue.rectTransform, true, 16, 30);
 
             var bestBox = Place(Node("Best", hud), new Vector2(1, 1), new Vector2(1, 0.5f), new Vector2(-14, -47.5f), new Vector2(140, 38));
-            Band(Label("Label", bestBox, "최고", 13, InkSoft, TextAlignmentOptions.TopRight).rectTransform, true, 0, 13);
+            var bestCaption = Label("Label", bestBox, "최고", 13, InkSoft, TextAlignmentOptions.TopRight);
+            Band(bestCaption.rectTransform, true, 0, 13);
             var bestValue = Label("Value", bestBox, "0", 22, Butter, TextAlignmentOptions.TopRight);
             Band(bestValue.rectTransform, true, 16, 22);
 
@@ -235,7 +270,17 @@ namespace Blackhole.EditorTools
             var ring = Img("Ring", pod, Art("UI/ui_pod_ring.png"), Color.white);
             Place(ring.rectTransform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), Vector2.zero, new Vector2(58, 58));
             var nextIcon = PlanetIconUI("Planet", ring.transform, Vector2.zero);
-            Band(Label("Caption", pod, "다음 행성", 12, InkSoft).rectTransform, true, 60, 15);
+            var podCaption = Label("Caption", pod, "다음 행성", 12, InkSoft);
+            Band(podCaption.rectTransform, true, 60, 15);
+
+            // 점수 아래: 지금 우주 ("● 두 번째 우주"). 첫 번째 우주에서는 숨긴다
+            var universeRow = Place(Node("Universe", hud), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(14, -79), new Vector2(150, 16));
+            var universeDot = Img("Dot", universeRow, Art("FX/disc.png"), Butter);
+            Place(universeDot.rectTransform, new Vector2(0, 0.5f), new Vector2(0, 0.5f), Vector2.zero, new Vector2(9, 9));
+            var universeLabel = Label("Label", universeRow, "두 번째 우주", 12, InkSoft, TextAlignmentOptions.MidlineLeft);
+            Stretch(universeLabel.rectTransform, 13, 0, 0, 0);
+            universeRow.gameObject.SetActive(false);
+            s_LineTinted.AddRange(new Graphic[] { scoreCaption, bestCaption, podCaption, universeLabel });
 
             // ── 아래: 도구, 도감, 배너 ──
             var bottom = Band(Node("Bottom", safe), false, 0, BottomHeight);
@@ -251,10 +296,15 @@ namespace Blackhole.EditorTools
             bannerLabel.lineSpacing = -8;
             Stretch(bannerLabel.rectTransform);
 
-            Band(Label("Caption", bottom, "행성 도감", 12, InkSoft).rectTransform, false, BannerHeight + 6 + 61 + 4, 15);
+            var evoCaption = Label("Caption", bottom, "행성 도감", 12, InkSoft);
+            Band(evoCaption.rectTransform, false, BannerHeight + 6 + 61 + 4, 15);
             var evo = Band(Node("Collection", bottom), false, BannerHeight + 6, 61, 12, 12);
-            Stretch(RoundRect("Fill", evo, 16, Rgba(14, 10, 46, 0.55f)).rectTransform);
-            Stretch(Img("Border", evo, Art("UI/ui_outline_r16.png"), PanelLine).rectTransform);
+            var evoFill = RoundRect("Fill", evo, 16, Rgba(14, 10, 46, 0.55f));
+            Stretch(evoFill.rectTransform);
+            var evoBorder = Img("Border", evo, Art("UI/ui_outline_r16.png"), PanelLine);
+            Stretch(evoBorder.rectTransform);
+            s_LineTinted.AddRange(new Graphic[] { dash, bannerLabel, evoCaption, evoBorder });
+            s_DeepTinted.Add(evoFill);
             var strip = evo.gameObject.AddComponent<CollectionStrip>();
             var cells = new Object[12];
             var icons = new Object[12];
@@ -271,6 +321,8 @@ namespace Blackhole.EditorTools
                 icons[i] = PlanetIconUI("Planet", cell, Vector2.zero);
                 discs[i] = unknown;
                 marks[i] = mark;
+                s_LineTinted.Add(unknown);
+                s_LineTinted.Add(mark);
             }
             Wire.Set(strip, "box", evo);
             Wire.SetArray(strip, "cells", cells);
@@ -336,6 +388,12 @@ namespace Blackhole.EditorTools
             Wire.Set(manager, "scoreText", scoreValue);
             Wire.Set(manager, "bestText", bestValue);
             Wire.Set(manager, "nextIcon", nextIcon);
+            Wire.Set(manager, "universeRow", universeRow.gameObject);
+            Wire.Set(manager, "universeDot", universeDot);
+            Wire.Set(manager, "universeLabel", universeLabel);
+            Wire.SetArray(manager, "lineTinted", s_LineTinted.ToArray());
+            Wire.SetArray(manager, "panelTinted", s_PanelTinted.ToArray());
+            Wire.SetArray(manager, "deepTinted", s_DeepTinted.ToArray());
             Wire.Set(manager, "swapTool", swapTool);
             Wire.Set(manager, "cleanTool", cleanTool);
             Wire.Set(manager, "soundButton", soundButton);
@@ -390,7 +448,10 @@ namespace Blackhole.EditorTools
             bg.sprite = Round(14);
             bg.type = UnityEngine.UI.Image.Type.Sliced;
             bg.color = Panel;
-            Stretch(Img("Border", root, Art("UI/ui_outline_r14.png"), PanelLine).rectTransform);
+            var border = Img("Border", root, Art("UI/ui_outline_r14.png"), PanelLine);
+            Stretch(border.rectTransform);
+            s_PanelTinted.Add(bg);
+            s_LineTinted.Add(border);
             var group = root.gameObject.AddComponent<CanvasGroup>();
             var button = root.gameObject.AddComponent<Button>();
             button.targetGraphic = bg;
@@ -439,7 +500,10 @@ namespace Blackhole.EditorTools
             bg.sprite = Round(14);
             bg.type = UnityEngine.UI.Image.Type.Sliced;
             bg.color = Panel;
-            Stretch(Img("Border", root, Art("UI/ui_outline_r14.png"), PanelLine).rectTransform);
+            var border = Img("Border", root, Art("UI/ui_outline_r14.png"), PanelLine);
+            Stretch(border.rectTransform);
+            s_PanelTinted.Add(bg);
+            s_LineTinted.Add(border);
             var button = root.gameObject.AddComponent<Button>();
             button.targetGraphic = bg;
             button.transition = Selectable.Transition.None;

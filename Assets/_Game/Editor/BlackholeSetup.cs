@@ -20,6 +20,7 @@ namespace Blackhole.EditorTools
         const string SpriteMaterialPath = Root + "/Materials/SpriteUnlit.mat";
         const string ShapesMaterialPath = Root + "/Materials/Shapes.mat";
         const string PlanetDataPath = Root + "/Data/PlanetData.asset";
+        const string UniverseDataPath = Root + "/Data/UniverseData.asset";
         const string PlanetPrefabPath = Root + "/Prefabs/Planet.prefab";
         const string TmpSettingsPath = "Assets/TextMesh Pro/Resources/TMP Settings.asset";
 
@@ -34,7 +35,8 @@ namespace Blackhole.EditorTools
             "지금 행성을 다른 행성으로 바꾸기 운석과 달을 모두 치우기 판과 판 사이에 나오는 광고 자리 건너뛰기 보상 없음 " +
             "같은 행성끼리 합체시켜 보세요 새 행성 발견 블랙홀 탄생 바깥쪽 행성을 치웠어요 으로 로 바꿨어요 " +
             "운석과 달을 치웠어요 치울 운석과 달이 없어요 자랑 문구를 복사했어요 콤보 위험 " +
-            "운석 달 수성 화성 금성 지구 해왕성 천왕성 토성 목성 태양 AdMob AD";
+            "운석 달 수성 화성 금성 지구 해왕성 천왕성 토성 목성 태양 AdMob AD " +
+            "첫 두 세 네 다섯 여섯 일곱 여덟 아홉 열 한 스무 스물 서른 번째 우주 도착 가장 멀리 간 까지";
 
         public sealed class Assets
         {
@@ -43,6 +45,7 @@ namespace Blackhole.EditorTools
             public Material SpriteMaterial;
             public Material ShapesMaterial;
             public PlanetData PlanetData;
+            public UniverseData UniverseData;
             public GameObject PlanetPrefab;
         }
 
@@ -115,6 +118,7 @@ namespace Blackhole.EditorTools
 
             CreateFont(a);
             a.PlanetData = CreatePlanetData();
+            a.UniverseData = CreateUniverseData();
             a.PlanetPrefab = CreatePlanetPrefab(a);
             AssetDatabase.SaveAssets();
             return a;
@@ -212,6 +216,55 @@ namespace Blackhole.EditorTools
             data.blackHoleGlow = UIFactory.Art("BlackHole/bh_glow.png");
             data.blackHoleDisk = UIFactory.Art("BlackHole/bh_disk.png");
             data.blackHoleCore = UIFactory.Art("BlackHole/bh_core.png");
+            EditorUtility.SetDirty(data);
+            return data;
+        }
+
+        /// <summary>
+        /// 우주 색 여섯 가지. 첫 번째는 프로토타입 배경 그대로다.
+        /// 인스펙터에서 고친 색을 덮어쓰지 않도록, 에셋이 없을 때만 기본값을 채운다.
+        /// </summary>
+        static UniverseData CreateUniverseData()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<UniverseData>(UniverseDataPath);
+            if (data != null && data.themes != null && data.themes.Length > 0) return data;
+            if (data == null)
+            {
+                data = ScriptableObject.CreateInstance<UniverseData>();
+                AssetDatabase.CreateAsset(data, UniverseDataPath);
+            }
+
+            // 이름, 배경(가운데·중간·가장자리), 성운 셋, 별, 경기장 바닥(가운데·75%·테두리), 테두리·흐린 글자
+            (string name, string center, string middle, string edge, string n1, string n2, string n3, string star,
+                string inner, string mid, string outer, string line)[] table =
+            {
+                ("보랏빛", "#2b1f6b", "#1a1446", "#0e0a2e", "#7850ff", "#ff6eaa", "#50dcc8", "#fff8e6", "#9682ff", "#5a46c8", "#aa96ff", "#c9c0f2"),
+                ("깊은 바다", "#163d78", "#0e2650", "#06122b", "#4696ff", "#5ae6ff", "#8c6eff", "#ebf5ff", "#78b4ff", "#3c6ed2", "#96c8ff", "#b9d7f5"),
+                ("분홍 성운", "#5a1d62", "#381242", "#1b0821", "#ff5aaa", "#ffa05a", "#aa5aff", "#fff0f5", "#ff8cd2", "#c846a0", "#ffaadc", "#f0c3e4"),
+                ("초록 오로라", "#0f4c48", "#0a312f", "#041817", "#3ce6aa", "#78c8ff", "#aaff8c", "#f0fff8", "#6ee6c8", "#28a08c", "#8cf0d2", "#b4eede"),
+                ("노을", "#5c2b16", "#3a1a0e", "#1b0b06", "#ff8c3c", "#ff5a6e", "#ffcd5a", "#fff0dc", "#ffaa78", "#d2643c", "#ffbe8c", "#f5d4b6"),
+                ("황금빛 밤", "#211c2a", "#131018", "#060508", "#ffc85a", "#c8a0ff", "#78c8ff", "#ffe2a0", "#ffe1a0", "#a08c6e", "#ffe6aa", "#e6d7b4"),
+            };
+            data.themes = new UniverseData.Theme[table.Length];
+            for (int i = 0; i < table.Length; i++)
+            {
+                var t = table[i];
+                data.themes[i] = new UniverseData.Theme
+                {
+                    name = t.name,
+                    center = UIFactory.Hex(t.center),
+                    middle = UIFactory.Hex(t.middle),
+                    edge = UIFactory.Hex(t.edge),
+                    nebula1 = UIFactory.Hex(t.n1),
+                    nebula2 = UIFactory.Hex(t.n2),
+                    nebula3 = UIFactory.Hex(t.n3),
+                    star = UIFactory.Hex(t.star),
+                    arenaInner = UIFactory.Hex(t.inner),
+                    arenaMiddle = UIFactory.Hex(t.mid),
+                    arenaOuter = UIFactory.Hex(t.outer),
+                    line = UIFactory.Hex(t.line),
+                };
+            }
             EditorUtility.SetDirty(data);
             return data;
         }
